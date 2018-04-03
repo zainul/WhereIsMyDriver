@@ -26,6 +26,7 @@ func ConnectDB() (db *gorm.DB, err error) {
 		dbCredential.User+":"+dbCredential.Password+"@tcp("+
 			dbCredential.Host+":"+dbCredential.Port+")/"+dbCredential.DBName+
 			"?charset=utf8&parseTime=True&loc=Local")
+
 	CheckErr("Error while connect to database ", err)
 	db = db.Debug()
 
@@ -40,7 +41,7 @@ func init() {
 	dbCredential.User = os.Getenv("DB_USER")
 }
 
-// CheckErr is use for checking general error 
+// CheckErr is use for checking general error
 func CheckErr(msg string, err error) {
 	if err != nil {
 		fmt.Println(err)

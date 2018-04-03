@@ -1,6 +1,8 @@
 package models
 
 import (
+	"WhereIsMyDriver/structs"
+
 	"github.com/go-sql-driver/mysql"
 	validator "gopkg.in/go-playground/validator.v9"
 )
@@ -22,6 +24,9 @@ type User struct {
 	LastName          *string
 	TokenConfirmation *string
 	ConfirmationAt    mysql.NullTime
+	CurrentLat        float32 `gorm:"not null" sql:"type:decimal(9,6);"`
+	CurrentLang       float32 `gorm:"not null" sql:"type:decimal(9,6);"`
+	CurrentAccuracy   float32 `gorm:"not null"`
 	Base
 }
 
@@ -31,7 +36,7 @@ func (u *User) TableName() string {
 }
 
 // RuleValidation ...
-func (u *User) RuleValidation() (errors []structs.Error) {
+func (u *User) RuleValidation() (errors []string) {
 	validate := validator.New()
 	err := validate.Struct(u)
 	errors = structs.MapValidation(err)
