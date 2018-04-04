@@ -1,6 +1,7 @@
 package models
 
 import (
+	"WhereIsMyDriver/adapters"
 	"WhereIsMyDriver/helper"
 	"WhereIsMyDriver/structs"
 	"time"
@@ -55,7 +56,40 @@ func (u *User) AddUser(v interface{}, errors *[]string) {
 	}
 }
 
+// SetDefault use for set default value if created and updated time
 func (u *User) SetDefault() {
 	u.Base.CreatedAt = time.Now()
 	u.Base.UpdatedAt = time.Now()
+}
+
+// UpdateNewPositionDriver use for update the driver position
+func (u *User) UpdateNewPositionDriver(
+	position HistoryPosition,
+	errStr *[]string,
+) {
+	position.SetDefault()
+
+	db, err := adapters.ConnectDB()
+	helper.CheckError("error connect to database", err)
+
+	tx := db.Begin()
+	if err := tx.Create(position).Error; err != nil {
+		tx.Rollback()
+		(*errStr) = append(*errStr, "failed saved new position")
+	}
+
+	var user = User{
+		CurrentLatitude:  position.Latitude,
+		CurrentLongitude: position.Longitude,
+		CurrentAccuracy:  position.Accuracy,
+	}
+
+	if err := tx.Table(u.TableName()).
+		Where("id = ?", position.UserID).
+		Update(user).Error; err != nil {
+		tx.Rollback()
+		(*errStr) = append(*errStr, "failed update current location driver")
+	}
+
+	tx.Commit()
 }
