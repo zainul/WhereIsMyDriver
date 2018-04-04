@@ -36,5 +36,6 @@ func main() {
 
 	// Make run migration
 	db.RunMigration()
+	db.SeedData()
 	app.Run(iris.Addr(":" + PORT))
 }
