@@ -20,9 +20,9 @@ func TestValidGetDriver(t *testing.T) {
 	app := irisApp()
 	e := httptest.New(t, app)
 	response := e.GET("/drivers").
-		WithQuery("latitude", 2.00).
-		WithQuery("longitude", 1.00).
-		WithQuery("radius", 10).
+		WithQuery("latitude", 37).
+		WithQuery("longitude", -122).
+		WithQuery("radius", 1000*1000).
 		WithQuery("limit", 10).
 		Expect()
 
@@ -51,7 +51,7 @@ func TestWrongLatitude(t *testing.T) {
 	e := httptest.New(t, app)
 	response := e.GET("/drivers").
 		WithQuery("latitude", 92.00).
-		WithQuery("longitude", 1.00).
+		WithQuery("longitude", -122).
 		WithQuery("radius", 10).
 		WithQuery("limit", 10).
 		Expect()

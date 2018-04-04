@@ -4,7 +4,11 @@ import (
 	"WhereIsMyDriver/adapters"
 	"WhereIsMyDriver/helper"
 	"WhereIsMyDriver/structs"
+	"WhereIsMyDriver/structs/api"
+	"strconv"
 	"time"
+
+	"github.com/kataras/iris/context"
 
 	"github.com/go-sql-driver/mysql"
 	validator "gopkg.in/go-playground/validator.v9"
@@ -94,4 +98,92 @@ func (u *User) UpdateNewPositionDriver(
 	}
 
 	tx.Commit()
+}
+
+// GetDriver is use for get driver location base on user location and filter
+// by radius
+func (u *User) GetDriver(
+	latitude float32,
+	longitude float32,
+	radius int,
+	limit int,
+) []api.GetDriver {
+	var drivers []api.GetDriver
+	db, err := adapters.ConnectDB()
+	helper.CheckError("failed to connect database", err)
+
+	db.Raw(
+		`
+		SELECT 
+			id, 
+			( 
+				6371000 * acos( 
+						cos( radians(?) ) * 
+						cos( radians( current_latitude ) ) * 
+						cos( radians( current_longitude ) - radians(?) ) + 
+						sin( radians(?) ) * 
+						sin(radians(current_latitude)) 
+					) 
+			) AS distance,
+			current_latitude,
+			current_longitude 
+		FROM `+u.TableName()+`
+		HAVING distance < ?
+		ORDER BY distance 
+		LIMIT 0 , ? ;`,
+		latitude,
+		longitude,
+		latitude,
+		radius,
+		limit,
+	).Scan(&drivers)
+
+	return drivers
+}
+
+// ValidateQueryStrDriver ...
+func (u *User) ValidateQueryStrDriver(
+	ctx context.Context,
+	errors *[]string,
+) (
+	paramLimit int,
+	paramRadius int,
+	paramLong float32,
+	paramLat float32,
+) {
+	query := ctx.Request().URL.Query()
+
+	if limit := query.Get("limit"); limit == "" {
+		paramLimit = 10
+	} else {
+		paramLimit, _ = strconv.Atoi(limit)
+	}
+
+	if radius := query.Get("radius"); radius == "" {
+		paramRadius = 500
+	} else {
+		paramRadius, _ = strconv.Atoi(radius)
+	}
+	if lat := query.Get("latitude"); lat == "" {
+		(*errors) = append(*errors, "latitude is mandatory")
+	} else {
+		paramLat64, _ := strconv.ParseFloat(lat, 32)
+		paramLat = float32(paramLat64)
+		validateRangeLatitude(paramLat, errors)
+	}
+
+	if long := query.Get("longitude"); long == "" {
+		(*errors) = append(*errors, "longitude is mandatory")
+	} else {
+		paramLong64, _ := strconv.ParseFloat(long, 32)
+		paramLong = float32(paramLong64)
+	}
+
+	return
+}
+
+func validateRangeLatitude(paramLat float32, errors *[]string) {
+	if paramLat < -90 || paramLat > 90 {
+		(*errors) = append(*errors, "Latitude should be between +/- 90")
+	}
 }
