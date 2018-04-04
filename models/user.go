@@ -24,8 +24,8 @@ type User struct {
 	LastName          *string
 	TokenConfirmation *string
 	ConfirmationAt    mysql.NullTime
-	CurrentLat        float32 `gorm:"not null" sql:"type:decimal(9,6);"`
-	CurrentLang       float32 `gorm:"not null" sql:"type:decimal(9,6);"`
+	CurrentLatitude   float32 `gorm:"not null" sql:"type:decimal(9,6);"`
+	CurrentLongitude  float32 `gorm:"not null" sql:"type:decimal(9,6);"`
 	CurrentAccuracy   float32 `gorm:"not null"`
 	Base
 }

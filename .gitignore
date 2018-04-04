@@ -19,3 +19,4 @@ vendor
 logs/*
 env
 gin-bin
+rule.md
