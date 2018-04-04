@@ -4,6 +4,13 @@ package api
 type GetDriver struct {
 	Distance  int     `json:"distance"`
 	ID        int     `json:"id"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	Latitude  float32 `json:"latitude"`
+	Longitude float32 `json:"longitude"`
+}
+
+// UpdateLocation struct for update driver location
+type UpdateLocation struct {
+	Latitude  float32 `json:"latitude"`
+	Longitude float32 `json:"longitude"`
+	Accuracy  float32 `json:"accuracy"`
 }

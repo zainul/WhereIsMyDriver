@@ -1,6 +1,7 @@
 package main
 
 import (
+	"WhereIsMyDriver/controllers"
 	db "WhereIsMyDriver/databases"
 	"WhereIsMyDriver/structs"
 	"log"
@@ -19,13 +20,8 @@ func irisApp() *iris.Application {
 		ctx.JSON(res)
 	})
 
-	app.Put("/drivers/:id/location", func(ctx iris.Context) {
-		log.Println(ctx.RequestPath(true))
-		res := structs.Response{}
-		ctx.StatusCode(iris.StatusOK)
-		ctx.JSON(res)
-	})
-
+	app.Put("/drivers/:id/location", controllers.UpdateLocation)
+	app.OnErrorCode(iris.StatusNotFound)
 	return app
 }
 

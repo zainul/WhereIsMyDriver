@@ -73,11 +73,6 @@ func (u *User) UpdateNewPositionDriver(
 	helper.CheckError("error connect to database", err)
 
 	tx := db.Begin()
-	if err := tx.Create(position).Error; err != nil {
-		tx.Rollback()
-		(*errStr) = append(*errStr, "failed saved new position")
-	}
-
 	var user = User{
 		CurrentLatitude:  position.Latitude,
 		CurrentLongitude: position.Longitude,
@@ -89,6 +84,13 @@ func (u *User) UpdateNewPositionDriver(
 		Update(user).Error; err != nil {
 		tx.Rollback()
 		(*errStr) = append(*errStr, "failed update current location driver")
+		return
+	}
+
+	if err := tx.Create(&position).Error; err != nil {
+		tx.Rollback()
+		(*errStr) = append(*errStr, "failed saved new position")
+		return
 	}
 
 	tx.Commit()

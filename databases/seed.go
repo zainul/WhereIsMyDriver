@@ -1,6 +1,7 @@
 package databases
 
 import (
+	"WhereIsMyDriver/adapters"
 	"WhereIsMyDriver/helper"
 	"WhereIsMyDriver/models"
 	"log"
@@ -12,6 +13,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// TotalUserSeed is total user seed data
+var TotalUserSeed = (50 * 1000)
+
 // SeedData ...
 func SeedData() {
 	start := time.Now()
@@ -21,12 +25,15 @@ func SeedData() {
 	// release resources used by pool
 	defer pool.Release()
 
-	// submit one or more jobs to pool
-	for i := 0; i < (50 * 1000); i++ {
-		count := i
-		log.Println(count)
-		pool.JobQueue <- func() {
-			SeedUserData(count)
+	if !IsCompletedSeedUserData() {
+
+		// submit one or more jobs to pool
+		for i := 0; i < TotalUserSeed; i++ {
+			count := i
+			log.Println(count)
+			pool.JobQueue <- func() {
+				SeedUserData(count)
+			}
 		}
 	}
 
@@ -61,4 +68,18 @@ func SeedUserData(i int) {
 	userData.SetDefault()
 
 	go user.AddUser(&userData, &errors)
+}
+
+// IsCompletedSeedUserData ...
+func IsCompletedSeedUserData() bool {
+	var user = models.User{}
+	var count int
+	db, err := adapters.ConnectDB()
+	helper.CheckError("failed connect to database", err)
+	db.Table(user.TableName()).Count(&count)
+	log.Println(count)
+	if count >= TotalUserSeed {
+		return true
+	}
+	return false
 }
