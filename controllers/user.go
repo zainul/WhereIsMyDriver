@@ -44,7 +44,8 @@ func UpdateLocation(c context.Context) {
 		c.StatusCode(iris.StatusBadRequest)
 	}
 
-	c.JSON(res)
+	_, errWrite := c.JSON(res)
+	helper.CheckError("Failed write response json ", errWrite)
 }
 
 // GetDrivers is use for get driver by user location
@@ -72,6 +73,6 @@ func GetDrivers(c context.Context) {
 		res.Data = drivers
 	}
 
-	c.JSON(res)
-
+	_, errWrite := c.JSON(res)
+	helper.CheckError("Failed write response json ", errWrite)
 }

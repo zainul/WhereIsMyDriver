@@ -78,8 +78,5 @@ func IsCompletedSeedUserData() bool {
 	helper.CheckError("failed connect to database", err)
 	db.Table(user.TableName()).Count(&count)
 	log.Println(count)
-	if count >= TotalUserSeed {
-		return true
-	}
-	return false
+	return (count >= TotalUserSeed)
 }

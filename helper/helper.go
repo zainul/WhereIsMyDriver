@@ -9,7 +9,8 @@ import (
 func ToStruct(source interface{}, dest interface{}) {
 	byteSource, errSource := json.Marshal(source)
 	CheckError("error marshal source struct", errSource)
-	json.Unmarshal(byteSource, dest)
+	errUnmarshal := json.Unmarshal(byteSource, dest)
+	CheckError("failed umarshal converter struct", errUnmarshal)
 }
 
 // CheckError global

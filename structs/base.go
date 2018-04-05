@@ -1,6 +1,8 @@
 package structs
 
 import (
+	"WhereIsMyDriver/helper"
+
 	validator "gopkg.in/go-playground/validator.v9"
 )
 
@@ -19,7 +21,7 @@ func MapValidation(err error) []string {
 
 	if err != nil {
 		if _, ok := err.(*validator.InvalidValidationError); ok {
-			// fmt.Println(err)
+			helper.CheckError("Invalid validation", err)
 		}
 		for _, errVal := range err.(validator.ValidationErrors) {
 			errDesc := mappingStrError(errVal.Tag(), errVal.Param())

@@ -6,6 +6,7 @@ import (
 	"WhereIsMyDriver/structs"
 	"WhereIsMyDriver/structs/api"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/kataras/iris/context"
@@ -118,7 +119,7 @@ func (u *User) GetDriver(
 	db, err := adapters.ConnectDB()
 	helper.CheckError("failed to connect database", err)
 
-	db.Raw(
+	qb := []string{
 		`
 		SELECT 
 			id, 
@@ -133,10 +134,15 @@ func (u *User) GetDriver(
 			) AS distance,
 			current_latitude,
 			current_longitude 
-		FROM `+u.TableName()+`
+		FROM `, u.TableName(), `
 		HAVING distance < ?
 		ORDER BY distance 
 		LIMIT 0 , ? ;`,
+	}
+
+	sql := strings.Join(qb, " ")
+	db.Raw(
+		sql,
 		latitude,
 		longitude,
 		latitude,

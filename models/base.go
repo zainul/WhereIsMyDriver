@@ -2,6 +2,7 @@ package models
 
 import (
 	"WhereIsMyDriver/adapters"
+	"WhereIsMyDriver/helper"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -27,11 +28,18 @@ func (b *Base) Connect() *gorm.DB {
 	return db
 }
 
+func closeDB(db *gorm.DB) {
+	defer func() {
+		errClose := db.Close()
+		helper.CheckError("failed close database ", errClose)
+	}()
+}
+
 // Find for find the record in database with some parameter as interface
 func (b *Base) Find(v interface{}) (errDB error) {
 	start := time.Now()
 	db := b.Connect()
-	defer db.Close()
+	closeDB(db)
 	errDB = db.Find(v).Error
 
 	b.LogTime(start, information)
@@ -44,7 +52,7 @@ func (b *Base) Find(v interface{}) (errDB error) {
 func (b *Base) FindOne(v interface{}, id int64) (notFound bool) {
 	start := time.Now()
 	db := b.Connect()
-	defer db.Close()
+	closeDB(db)
 	notFound = db.Find(v, id).RecordNotFound()
 	b.LogTime(start, information)
 
@@ -54,7 +62,7 @@ func (b *Base) FindOne(v interface{}, id int64) (notFound bool) {
 // Update for update some value to database with some parameter interface and id
 func (b *Base) Update(name string, v interface{}, id int64) (errDB error) {
 	db := b.Connect()
-	defer db.Close()
+	closeDB(db)
 	errDB = db.Table(name).Where("id = ?", id).Update(v).Error
 
 	return
@@ -63,7 +71,7 @@ func (b *Base) Update(name string, v interface{}, id int64) (errDB error) {
 // Create for create record to database
 func (b *Base) Create(v interface{}) (errDB error) {
 	db := b.Connect()
-	defer db.Close()
+	closeDB(db)
 	errDB = db.Create(v).Error
 
 	return
@@ -73,7 +81,7 @@ func (b *Base) Create(v interface{}) (errDB error) {
 func (b *Base) Delete(v interface{}, id int64) (errDB error) {
 	start := time.Now()
 	db := b.Connect()
-	defer db.Close()
+	closeDB(db)
 	errDB = db.Delete(v, id).Error
 	b.LogTime(start, information)
 
@@ -84,8 +92,8 @@ func (b *Base) Delete(v interface{}, id int64) (errDB error) {
 func (b *Base) ToStruct(v interface{}, vDest interface{}) interface{} {
 	byteData, err := json.Marshal(v)
 	CheckErr("error while unmarshal struct ", err)
-	json.Unmarshal(byteData, vDest)
-
+	errUnmarshal := json.Unmarshal(byteData, vDest)
+	helper.CheckError("failed unmarshal ", errUnmarshal)
 	return vDest
 }
 
@@ -98,6 +106,6 @@ func (b *Base) LogTime(start time.Time, information string) {
 //CheckErr ...
 func CheckErr(msg string, err error) {
 	if err != nil {
-		log.Println(err)
+		log.Println(msg, err)
 	}
 }
