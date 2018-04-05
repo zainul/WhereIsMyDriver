@@ -1,10 +1,12 @@
 package controllers
 
 import (
+	"WhereIsMyDriver/helper"
 	"WhereIsMyDriver/models"
 	"WhereIsMyDriver/structs"
 	"WhereIsMyDriver/structs/api"
 	"log"
+	"strconv"
 
 	"github.com/kataras/iris"
 
@@ -23,12 +25,14 @@ func UpdateLocation(c context.Context) {
 
 		return
 	}
+	userIDint, errStrConv := strconv.Atoi(c.Params().Get("id"))
+	helper.CheckError("failed convert user id", errStrConv)
 
 	updateLocationData := models.HistoryPosition{
 		Latitude:  loc.Latitude,
 		Longitude: loc.Longitude,
 		Accuracy:  loc.Accuracy,
-		UserID:    c.Params().Get("id"),
+		UserID:    userIDint,
 	}
 
 	user.UpdateNewPositionDriver(

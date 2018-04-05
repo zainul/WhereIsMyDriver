@@ -69,3 +69,61 @@ func TestWrongLatitude(t *testing.T) {
 		})
 	})
 }
+
+func TestWrongUserIDWhenUpdate(t *testing.T) {
+	var res structs.Response
+	driverLoc := api.UpdateLocation{
+		Accuracy:  0.7,
+		Latitude:  12.97161923,
+		Longitude: 77.59463452,
+	}
+
+	app := irisApp()
+	e := httptest.New(t, app)
+	response := e.PUT("/drivers/50001/location").
+		WithJSON(driverLoc).
+		Expect()
+
+	bodyByte := []byte(response.Body().Raw())
+	json.Unmarshal(bodyByte, &res)
+
+	Convey("InValid update request \n", t, func() {
+		Convey("Should have status 400", func() {
+			So(response.Raw().StatusCode,
+				ShouldEqual,
+				iris.StatusBadRequest)
+		})
+		Convey("Should have error", func() {
+			So(res.Errors[0], ShouldEqual, "The driver ID is invalid")
+		})
+	})
+}
+
+func TestValidUserIDWhenUpdate(t *testing.T) {
+	var res structs.Response
+	driverLoc := api.UpdateLocation{
+		Accuracy:  0.7,
+		Latitude:  12.97161923,
+		Longitude: 77.59463452,
+	}
+
+	app := irisApp()
+	e := httptest.New(t, app)
+	response := e.PUT("/drivers/5000/location").
+		WithJSON(driverLoc).
+		Expect()
+
+	bodyByte := []byte(response.Body().Raw())
+	json.Unmarshal(bodyByte, &res)
+
+	Convey("Valid update request \n", t, func() {
+		Convey("Should have status 200", func() {
+			So(response.Raw().StatusCode,
+				ShouldEqual,
+				iris.StatusOK)
+		})
+		Convey("Should have no error", func() {
+			So(res.Errors, ShouldEqual, nil)
+		})
+	})
+}

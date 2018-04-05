@@ -83,6 +83,12 @@ func (u *User) UpdateNewPositionDriver(
 		CurrentAccuracy:  position.Accuracy,
 	}
 
+	if position.UserID < 0 || position.UserID > (50*1000) {
+		tx.Rollback()
+		(*errStr) = append(*errStr, "The driver ID is invalid")
+		return
+	}
+
 	if err := tx.Table(u.TableName()).
 		Where("id = ?", position.UserID).
 		Update(user).Error; err != nil {
