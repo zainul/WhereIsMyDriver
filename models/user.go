@@ -5,6 +5,8 @@ import (
 	"WhereIsMyDriver/helper"
 	"WhereIsMyDriver/structs"
 	"WhereIsMyDriver/structs/api"
+	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -20,6 +22,9 @@ const UserTableName = "users"
 
 // User ...
 type User struct {
+	ID                uint    `json:"id" gorm:"primary_key"`
+	CurrentLatitude   float32 `gorm:"not null;primary_key" sql:"type:decimal(9,6);index"`
+	CurrentLongitude  float32 `gorm:"not null;primary_key" sql:"type:decimal(9,6);index"`
 	Email             string  `gorm:"not null;unique_index" validate:"required,email"`
 	Username          string  `gorm:"not null;unique" validate:"required,gte=6"`
 	Password          string  `gorm:"not null;type:varchar(1000)" validate:"required,gte=6"`
@@ -32,10 +37,10 @@ type User struct {
 	LastName          string
 	TokenConfirmation *string
 	ConfirmationAt    mysql.NullTime
-	CurrentLatitude   float32 `gorm:"not null" sql:"type:decimal(9,6);"`
-	CurrentLongitude  float32 `gorm:"not null" sql:"type:decimal(9,6);"`
-	CurrentAccuracy   float32 `gorm:"not null"`
-	Base
+	CurrentAccuracy   float32    `gorm:"not null"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
+	DeletedAt         *time.Time `json:"deleted_at" sql:"index"`
 }
 
 // TableName ...
@@ -53,7 +58,8 @@ func (u *User) RuleValidation() (errors []string) {
 
 // AddUser use for saving user
 func (u *User) AddUser(v interface{}, errors *[]string) {
-	errDB := u.Create(v)
+	var base = new(Base)
+	errDB := base.Create(v)
 	helper.CheckError("failed save to database", errDB)
 
 	if errDB != nil {
@@ -63,8 +69,8 @@ func (u *User) AddUser(v interface{}, errors *[]string) {
 
 // SetDefault use for set default value if created and updated time
 func (u *User) SetDefault() {
-	u.Base.CreatedAt = time.Now()
-	u.Base.UpdatedAt = time.Now()
+	u.CreatedAt = time.Now()
+	u.UpdatedAt = time.Now()
 }
 
 // UpdateNewPositionDriver use for update the driver position
@@ -75,6 +81,7 @@ func (u *User) UpdateNewPositionDriver(
 	position.SetDefault()
 
 	db, err := adapters.ConnectDB()
+	defer closeDB(db)
 	helper.CheckError("error connect to database", err)
 
 	tx := db.Begin()
@@ -101,10 +108,13 @@ func (u *User) UpdateNewPositionDriver(
 	if err := tx.Create(&position).Error; err != nil {
 		tx.Rollback()
 		(*errStr) = append(*errStr, "failed saved new position")
+		errClose := db.Close()
+		helper.CheckError("error close db", errClose)
 		return
 	}
 
 	tx.Commit()
+
 }
 
 // GetDriver is use for get driver location base on user location and filter
@@ -115,8 +125,112 @@ func (u *User) GetDriver(
 	radius int,
 	limit int,
 ) []api.GetDriver {
+	var count int
+	db, err := adapters.ConnectDB()
+	helper.CheckError("failed connect to database", err)
+	db.Table(u.TableName()).Count(&count)
+	errClose := db.Close()
+	helper.CheckError("failed close db", errClose)
+
+	diff := float64(count) / float64(10)
+	sizeDiff := int(math.Ceil(diff))
+
+	drivers := splitGetData(
+		latitude,
+		longitude,
+		radius,
+		limit,
+		count,
+		sizeDiff,
+		u.TableName(),
+	)
+
+	return drivers
+}
+
+func splitGetData(
+	latitude float32,
+	longitude float32,
+	radius int,
+	limit int,
+	totalRecord int,
+	size int,
+	tableName string,
+) []api.GetDriver {
+
+	var res []api.GetDriver
+
+	diff := float64(totalRecord) / float64(size)
+	page := int(math.Ceil(diff))
+	var startID = 0
+	var endID = size
+
+	c := make(chan []api.GetDriver)
+
+	for index := 1; index <= page; index++ {
+		go func(
+			latitude float32,
+			longitude float32,
+			radius int,
+			limit int,
+			tableName string,
+			startID int,
+			endID int,
+			co chan<- []api.GetDriver,
+		) {
+			co <- getDriver(
+				latitude,
+				longitude,
+				radius,
+				limit,
+				tableName,
+				startID,
+				endID,
+			)
+		}(latitude, longitude, radius, limit, tableName, startID, endID, c)
+
+		startID = endID + 1
+		endID = ((index + 1) * size)
+	}
+
+	for index := 1; index <= page; index++ {
+		var drivers []api.GetDriver
+		drivers = <-c
+		(res) = append(res, drivers...)
+	}
+
+	sortByDistance(&res)
+	recordDriverWithLimit := make([]api.GetDriver, 0)
+
+	if len(res) >= limit {
+		for j := 0; j < limit; j++ {
+			recordDriverWithLimit = append(recordDriverWithLimit, res[j])
+		}
+	} else {
+		recordDriverWithLimit = append(recordDriverWithLimit, res...)
+	}
+
+	return recordDriverWithLimit
+}
+
+func sortByDistance(res *[]api.GetDriver) {
+	sort.Slice(*res, func(i, j int) bool {
+		return (*res)[i].Distance < (*res)[i].Distance
+	})
+}
+
+func getDriver(
+	latitude float32,
+	longitude float32,
+	radius int,
+	limit int,
+	tableName string,
+	startID int,
+	endID int,
+) []api.GetDriver {
 	var drivers []api.GetDriver
 	db, err := adapters.ConnectDB()
+	defer closeDB(db)
 	helper.CheckError("failed to connect database", err)
 
 	qb := []string{
@@ -124,17 +238,17 @@ func (u *User) GetDriver(
 		SELECT 
 			id, 
 			( 
-				6371000 * acos( 
-						cos( radians(?) ) * 
+				63710 * acos(
+						cos( radians( ? ) ) * 
 						cos( radians( current_latitude ) ) * 
 						cos( radians( current_longitude ) - radians(?) ) + 
-						sin( radians(?) ) * 
-						sin(radians(current_latitude)) 
-					) 
+						sin(radians(?)) * sin(radians(current_latitude)) 
+					)
 			) AS distance,
 			current_latitude,
 			current_longitude 
-		FROM `, u.TableName(), `
+		FROM `, tableName, `
+		WHERE id > ? AND id <= ?
 		HAVING distance < ?
 		ORDER BY distance 
 		LIMIT 0 , ? ;`,
@@ -146,6 +260,8 @@ func (u *User) GetDriver(
 		latitude,
 		longitude,
 		latitude,
+		startID,
+		endID,
 		radius,
 		limit,
 	).Scan(&drivers)

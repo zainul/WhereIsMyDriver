@@ -39,7 +39,7 @@ func closeDB(db *gorm.DB) {
 func (b *Base) Find(v interface{}) (errDB error) {
 	start := time.Now()
 	db := b.Connect()
-	closeDB(db)
+	defer closeDB(db)
 	errDB = db.Find(v).Error
 
 	b.LogTime(start, information)
@@ -52,7 +52,7 @@ func (b *Base) Find(v interface{}) (errDB error) {
 func (b *Base) FindOne(v interface{}, id int64) (notFound bool) {
 	start := time.Now()
 	db := b.Connect()
-	closeDB(db)
+	defer closeDB(db)
 	notFound = db.Find(v, id).RecordNotFound()
 	b.LogTime(start, information)
 
@@ -62,7 +62,7 @@ func (b *Base) FindOne(v interface{}, id int64) (notFound bool) {
 // Update for update some value to database with some parameter interface and id
 func (b *Base) Update(name string, v interface{}, id int64) (errDB error) {
 	db := b.Connect()
-	closeDB(db)
+	defer closeDB(db)
 	errDB = db.Table(name).Where("id = ?", id).Update(v).Error
 
 	return
@@ -71,7 +71,7 @@ func (b *Base) Update(name string, v interface{}, id int64) (errDB error) {
 // Create for create record to database
 func (b *Base) Create(v interface{}) (errDB error) {
 	db := b.Connect()
-	closeDB(db)
+	defer closeDB(db)
 	errDB = db.Create(v).Error
 
 	return
@@ -81,7 +81,7 @@ func (b *Base) Create(v interface{}) (errDB error) {
 func (b *Base) Delete(v interface{}, id int64) (errDB error) {
 	start := time.Now()
 	db := b.Connect()
-	closeDB(db)
+	defer closeDB(db)
 	errDB = db.Delete(v, id).Error
 	b.LogTime(start, information)
 

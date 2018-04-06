@@ -20,7 +20,7 @@ var TotalUserSeed = (50 * 1000)
 func SeedData() {
 	start := time.Now()
 	// number of workers, and size of job queue
-	pool := grpool.NewPool(100, 500)
+	pool := grpool.NewPool(90, 450)
 
 	// release resources used by pool
 	defer pool.Release()
@@ -58,7 +58,7 @@ func SeedUserData(i int) {
 		Email:            idxStr + fake.EmailAddress(),
 		FirstName:        fake.FirstName(),
 		FullName:         fake.FullName(),
-		IdentifiedNumber: fake.CharactersN(10),
+		IdentifiedNumber: idxStr + fake.CharactersN(10),
 		LastName:         fake.LastName(),
 		Password:         string(password),
 		CurrentLatitude:  fake.Latitude(),
@@ -78,5 +78,7 @@ func IsCompletedSeedUserData() bool {
 	helper.CheckError("failed connect to database", err)
 	db.Table(user.TableName()).Count(&count)
 	log.Println(count)
+	errClose := db.Close()
+	helper.CheckError("failed close", errClose)
 	return (count >= TotalUserSeed)
 }

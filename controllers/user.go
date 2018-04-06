@@ -17,6 +17,8 @@ var user = new(models.User)
 
 // UpdateLocation use for update the driver location
 func UpdateLocation(c context.Context) {
+	log.Println(c.Request().URL)
+	// log.Println(c.CO)
 	var res structs.Response
 
 	loc := &api.UpdateLocation{}
@@ -25,6 +27,7 @@ func UpdateLocation(c context.Context) {
 
 		return
 	}
+	log.Println(loc)
 	userIDint, errStrConv := strconv.Atoi(c.Params().Get("id"))
 	helper.CheckError("failed convert user id", errStrConv)
 

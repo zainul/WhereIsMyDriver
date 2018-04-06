@@ -1,4 +1,4 @@
-package main
+package routers
 
 import (
 	"WhereIsMyDriver/helper"
@@ -17,7 +17,7 @@ func TestValidGetDriver(t *testing.T) {
 	var res structs.Response
 	var getDrivers []api.GetDriver
 
-	app := irisApp()
+	app := IrisApp()
 	e := httptest.New(t, app)
 	response := e.GET("/drivers").
 		WithQuery("latitude", 37).
@@ -47,7 +47,7 @@ func TestValidGetDriver(t *testing.T) {
 func TestWrongLatitude(t *testing.T) {
 	var res structs.Response
 
-	app := irisApp()
+	app := IrisApp()
 	e := httptest.New(t, app)
 	response := e.GET("/drivers").
 		WithQuery("latitude", 92.00).
@@ -78,7 +78,7 @@ func TestWrongUserIDWhenUpdate(t *testing.T) {
 		Longitude: 77.59463452,
 	}
 
-	app := irisApp()
+	app := IrisApp()
 	e := httptest.New(t, app)
 	response := e.PUT("/drivers/50001/location").
 		WithJSON(driverLoc).
@@ -107,7 +107,7 @@ func TestValidUserIDWhenUpdate(t *testing.T) {
 		Longitude: 77.59463452,
 	}
 
-	app := irisApp()
+	app := IrisApp()
 	e := httptest.New(t, app)
 	response := e.PUT("/drivers/5000/location").
 		WithJSON(driverLoc).

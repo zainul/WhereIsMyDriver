@@ -29,10 +29,10 @@ func ConnectDB() (db *gorm.DB, err error) {
 			"?charset=utf8&parseTime=True&loc=Local")
 
 	CheckErr("Error while connect to database ", err)
-	// db = db.Debug()
+	db = db.Debug()
 
-	db.DB().SetMaxIdleConns(200)
-	db.DB().SetMaxOpenConns(500)
+	db.DB().SetMaxIdleConns(150)
+	db.DB().SetMaxOpenConns(400)
 	db.DB().SetConnMaxLifetime(time.Hour)
 
 	return

@@ -1,0 +1,44 @@
+# count of concurrent user sessions, optional, default 1
+concurrency: 30
+
+# number of script repetitions, optional, default 1
+loopCount: 10
+
+# server response timeout, optional, default 2 seconds
+timeout: 2
+
+# network protocol http or https, optional parameter, default http
+scheme: http
+
+# hostname or IP address, required parameter
+host: localhost
+
+# host port for connection, optional, default 80
+port: 3001
+
+# variables can be used in the header, query variable
+params:
+  # Regular variables are selected for each request and are not interrelated in any way
+  search:
+    # if the value is an enumeration, then one of the enumeration values ​​is substituted in the request
+    languages: [php, java, c ++, c, go, golang, js]
+    structures: [for, while, class, if, else, case]
+  agent:
+    - Mozilla / 5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit / 537.36 (KHTML, like Gecko) Chrome / 38.0.2125.101 Safari / 537.36 FirePHP / 4Chrome
+  driverid: []
+
+# global headers that will be inserted into each script request, optional parameter
+headers:
+  User-Agent: $ {agent}
+
+# sequence of requests to be executed, optional parameter, if no requests are specified, the program will execute the GET request to the main page
+requests:
+
+  # GET | POST | PUT | DELETE: / path? Query - standard queries
+
+  # RANDOM | SYNC - query groups
+
+  # RANDOM - in this group the requests are executed in random order any number of times (which query can be executed several times, and which one will not be executed at all)
+  - RANDOM:
+    # to send raw json body you have to specify request's raw_body in params AND set content-type headers to application / json
+    - GET: /drivers?latitude=37&limit=10&longitude=-122&radius=500
