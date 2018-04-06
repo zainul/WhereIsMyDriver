@@ -1,13 +1,48 @@
 package models
 
 import (
+	"WhereIsMyDriver/helper"
 	"WhereIsMyDriver/structs/api"
+	"strconv"
 	"testing"
 
+	"github.com/icrowley/fake"
 	. "github.com/smartystreets/goconvey/convey"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var user = new(User)
+
+func init() {
+	for index := 0; index < 500; index++ {
+		var user = User{}
+
+		var errors = []string{}
+		password, err := bcrypt.GenerateFromPassword(
+			[]byte(fake.SimplePassword()),
+			bcrypt.DefaultCost,
+		)
+
+		helper.CheckError("failed make bcrypt password", err)
+		idxStr := strconv.Itoa(index)
+		userData := User{
+			Username:         fake.UserName() + idxStr,
+			Phone:            idxStr + fake.Phone(),
+			Email:            idxStr + fake.EmailAddress(),
+			FirstName:        fake.FirstName(),
+			FullName:         fake.FullName(),
+			IdentifiedNumber: idxStr + fake.CharactersN(10),
+			LastName:         fake.LastName(),
+			Password:         string(password),
+			CurrentLatitude:  fake.Latitude(),
+			CurrentLongitude: fake.Longitude(),
+			CurrentAccuracy:  0.7,
+		}
+		userData.SetDefault()
+
+		go user.AddUser(&userData, &errors)
+	}
+}
 
 func TestUserGetData(t *testing.T) {
 	drivers := user.GetDriver(57, -122, 1000, 10)

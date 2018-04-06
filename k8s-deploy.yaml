@@ -1,0 +1,41 @@
+# this file for deployment txn
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: whereismydriver
+  labels:
+    run: whereismydriver
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: whereismydriver
+    spec:
+      containers:
+      - name: whereismydriver
+        image: zainulmasadi/whereismydriver:latest
+        imagePullPolicy: Always
+        env:
+        - name: GOAPP
+          value: "WhereIsMyDriver"
+        - name: GOENV
+          value: "prod"
+        - name: PORT
+          value: "3001"
+        - name: DB_NAME
+          value: "where_is_my_driver"
+        - name: DB_HOST
+          value: "172.17.0.1"
+        - name: DB_USER
+          value: "root"
+        - name: DB_PASSWORD
+          value: root"
+        - name: DB_PORT
+          value: "3306"
+      restartPolicy: Always
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
