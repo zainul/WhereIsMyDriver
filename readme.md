@@ -47,3 +47,56 @@ run the docker
 ```
 docker run --expose=5000 -p 5000:5000 -dit --restart unless-stopped --name whereismydriver --net="host" zainulmasadi/whereismydriver
 ```
+### Installation app in local
+
+install iris
+
+```
+go get -u github.com/kataras/iris
+```
+
+run this command to install dependency
+```
+go get ./...
+```
+### Test
+
+for integration (http) test
+
+```
+cd $GOPATH/src/WhereIsMyDriver/router && go test -v
+```
+
+for unit test
+
+```
+cd $GOPATH/src/WhereIsMyDriver/model && go test -v
+```
+
+for load test
+
+requirement for load test:
+
+1. install load test tool (mgun)
+
+```
+https://github.com/byorty/mgun
+```
+
+and then follow the instruction
+
+```
+cd /path/to/gopath
+export GOPATH=/path/to/gopath/
+export GOBIN=/path/to/gopath/bin/
+go get github.com/byorty/mgun
+go install src/github.com/byorty/mgun/mgun.go
+```
+
+after this run the script
+
+go to your path
+
+```
+./bin/mgun -f src/WhereIsMyDriver/mgun_test.yaml
+```
