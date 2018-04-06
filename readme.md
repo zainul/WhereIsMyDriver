@@ -45,7 +45,7 @@ kubectl create -f deployment.yaml
 
 run the docker 
 ```
-docker run --expose=5000 -p 5000:5000 -dit --restart unless-stopped --name whereismydriver --net="host" zainulmasadi/whereismydriver
+docker run --expose=3000 -p 3001:3000 -dit --restart unless-stopped --name whereismydriver --net="host" zainulmasadi/whereismydriver
 ```
 ### Installation app in local
 
