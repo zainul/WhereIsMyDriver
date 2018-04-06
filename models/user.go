@@ -5,6 +5,7 @@ import (
 	"WhereIsMyDriver/helper"
 	"WhereIsMyDriver/structs"
 	"WhereIsMyDriver/structs/api"
+	"log"
 	"math"
 	"sort"
 	"strconv"
@@ -112,6 +113,7 @@ func (u *User) UpdateNewPositionDriver(
 		helper.CheckError("error close db", errClose)
 		return
 	}
+	log.Println(errStr)
 
 	tx.Commit()
 

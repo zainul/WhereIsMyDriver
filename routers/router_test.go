@@ -5,7 +5,9 @@ import (
 	"WhereIsMyDriver/structs"
 	"WhereIsMyDriver/structs/api"
 	"encoding/json"
+	"strconv"
 	"testing"
+	"time"
 	// "github.com/buger/jsonparser"
 	"github.com/kataras/iris"
 	"github.com/kataras/iris/httptest"
@@ -124,6 +126,54 @@ func TestValidUserIDWhenUpdate(t *testing.T) {
 		})
 		Convey("Should have no error", func() {
 			So(res.Errors, ShouldEqual, nil)
+		})
+	})
+}
+
+func TestLoadUpdate(t *testing.T) {
+	var res structs.Response
+	driverLoc := api.UpdateLocation{
+		Accuracy:  0.7,
+		Latitude:  12.97161923,
+		Longitude: 77.59463452,
+	}
+
+	app := IrisApp()
+	err := []string{}
+
+	for j := 0; j < 10; j++ {
+		for index := 0; index < 10000; index++ {
+			for k := (index * 5); k < ((index + 1) * 5); k++ {
+				go func(
+					app *iris.Application,
+					t *testing.T,
+					index int,
+					driverLoc api.UpdateLocation,
+					res structs.Response,
+					err *[]string,
+				) {
+					e := httptest.New(t, app)
+					response := e.PUT("/drivers/" +
+						strconv.Itoa(index) + "/location").
+						WithJSON(driverLoc).
+						Expect()
+
+					bodyByte := []byte(response.Body().Raw())
+					json.Unmarshal(bodyByte, &res)
+
+					if len(res.Errors) > 0 {
+						(*err) = append(*err, res.Errors...)
+					}
+				}(app, t, index, driverLoc, res, &err)
+			}
+			time.Sleep(30 * time.Millisecond)
+		}
+		time.Sleep(60 * time.Second)
+	}
+
+	Convey("Success update driver position \n", t, func() {
+		Convey("Should have no error", func() {
+			So(len(err), ShouldEqual, 0)
 		})
 	})
 }
