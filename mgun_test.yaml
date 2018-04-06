@@ -1,8 +1,8 @@
 # count of concurrent user sessions, optional, default 1
-concurrency: 30
+concurrency: 20
 
 # number of script repetitions, optional, default 1
-loopCount: 10
+loopCount: 5
 
 # server response timeout, optional, default 2 seconds
 timeout: 2
