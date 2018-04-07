@@ -31,8 +31,8 @@ func ConnectDB() (db *gorm.DB, err error) {
 	CheckErr("Error while connect to database ", err)
 	// db = db.Debug()
 
-	db.DB().SetMaxIdleConns(1500)
-	db.DB().SetMaxOpenConns(4000)
+	db.DB().SetMaxIdleConns(150)
+	db.DB().SetMaxOpenConns(400)
 	db.DB().SetConnMaxLifetime(time.Hour)
 
 	return
